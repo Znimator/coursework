@@ -1,5 +1,6 @@
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
+from PyQt6.QtMultimedia import *
 import openpyxl
 import sys
 import time
@@ -18,9 +19,10 @@ class Window(QMainWindow):
         super().__init__()
 
         self.menu_bar = QMenuBar()
+        self.setStyleSheet("background-color: #002d2b; color: white;")
 
-        self.menu = QMenu("Файлик")
-        action1 = self.menu.addAction("Сохранить Файл")
+        self.menu = QMenu("File")
+        action1 = self.menu.addAction("Сохранить Изменения")
         action1.triggered.connect(self.export)
 
         self.menu_bar.addMenu(self.menu)
@@ -69,6 +71,16 @@ class Window(QMainWindow):
                         
         wb.save(filename)
 
+class ListWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Списки")
+        self.setFixedSize(300, 100)
+        self.setStyleSheet("background-color: #002d2b; color: white;")
+        
+        self._layout = QVBoxLayout()
+        self.setLayout(self._layout)
+
 # Окно для добавления новой даты
 class DataWindow(QWidget):
     def __init__(self):
@@ -78,6 +90,7 @@ class DataWindow(QWidget):
         self.setFixedSize(500, 500)
 
         self.Layout = QVBoxLayout()
+        self.setStyleSheet("background-color: #002d2b; color: white;")
         self.setLayout(self.Layout)
 
         self.addButton = QPushButton("Добавить")
@@ -85,13 +98,12 @@ class DataWindow(QWidget):
         self.Layout.addWidget(self.addButton)
         
         self.inputs :list[QLineEdit] = []
-        self.labels :list[QLabel] = []
 
     # Добавления новой строки по записанным данным
     def acceptInfo(self):
         widget.currList.insertRow(0)
 
-        for i in range(len(self.labels)):
+        for i in range(len(self.inputs)):
             print(0, i)
             item = TableWidgetItem(str(self.inputs[i].text()))
 
@@ -108,13 +120,11 @@ class DataWindow(QWidget):
             labels.append(str(c+1) if label is None else label.text())
         
         for l in range(len(labels)):
-            label = QLabel(labels[l])
             lineEdit = QLineEdit()
-            self.Layout.addWidget(label)
+            lineEdit.setPlaceholderText(labels[l])
             self.Layout.addWidget(lineEdit)
 
             self.inputs.append(lineEdit)
-            self.labels.append(label)
 
         self.Layout.addWidget(self.addButton)
 
@@ -132,12 +142,16 @@ class Main(QWidget):
         self.setWindowTitle("Курсовая")
         self.setFixedSize(900, 900)
         
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        self._layout = QVBoxLayout()
+        self.setLayout(self._layout)
         
         self.addData = QPushButton("Добавить")
         self.remove_row = QPushButton("Удалить")
     
+        self.player = QSoundEffect()
+        self.player.setSource(QUrl.fromLocalFile("./click.wav"))
+        self.player.setVolume(1)
+
         self.filter = QComboBox()
 
         self.DataWindow = DataWindow()
@@ -148,25 +162,22 @@ class Main(QWidget):
         self.selectedRow = 0
 
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Ввести поиск здесь...")
+        self.search.setPlaceholderText("Найти")
         self.search.textChanged.connect(self.findName)
 
-        self.list = QListWidget()
-        self.list.setFixedSize(900, 70)
-        self.list.itemClicked.connect(self.onClickList)
-
         #Добавление виджетов pyqt6 в макет/каркас
-        layout.addWidget(self.list)
-        layout.setAlignment(self.list, Qt.AlignmentFlag.AlignCenter)
 
-        layout.addWidget(self.filter)
-        layout.addWidget(self.search)
-        layout.addWidget(self.addData)
-        layout.addWidget(self.remove_row)
+        self._layout.addWidget(self.filter)
+        self._layout.addWidget(self.search)
         
+        self.ListWindow = ListWindow()
+        self.ListWindow.show()
+
         path = "./data.xlsx"
         self.workbook = openpyxl.load_workbook(path)
         self.temp_sheets = {}
+
+        self.buttons : dict[str, QPushButton] = {}
 
         # Предзагрузка листов
         for name in self.workbook.sheetnames:
@@ -177,9 +188,12 @@ class Main(QWidget):
             self.temp_sheets[self.workbook[name]] = tableWidget
             tableWidget.hide()
 
-            layout.addWidget(tableWidget)
+            self._layout.addWidget(tableWidget)
 
         self.currList :QTableWidget = self.temp_sheets[next(iter(self.temp_sheets))]
+        
+        self._layout.addWidget(self.addData)
+        self._layout.addWidget(self.remove_row)
 
         self.load_data()
 
@@ -210,16 +224,22 @@ class Main(QWidget):
 
     #Переключение между листами Excel при помощи QListWidget
     def onClickList(self, item :QListWidgetItem):
+        self.player.play()
+
+        sender = self.sender()
+        print(sender)
+        item = sender
+
         for sheet, widget in self.temp_sheets.items():
             widget.hide()
 
         self.temp_sheets[self.workbook[item.text()]].show()
-        self.currList = self.temp_sheets[self.workbook[item.text()]]
+        self.currentWidget = self.temp_sheets[self.workbook[item.text()]]
 
         labels = []
 
-        for c in range(self.currList.columnCount()):
-            label = self.currList.horizontalHeaderItem(c)
+        for c in range(self.currentWidget.columnCount()):
+            label = self.currentWidget.horizontalHeaderItem(c)
             labels.append(str(c+1) if label is None else label.text())
     
         #Загрузка фильтра при смене листа
@@ -232,7 +252,11 @@ class Main(QWidget):
     def load_data(self):
 
         for name in self.workbook.sheetnames:
-            self.list.addItem(name)
+
+            self.buttons[name] = QPushButton(name)
+            self.buttons[name].clicked.connect(self.onClickList)
+            self.ListWindow._layout.addWidget(self.buttons[name])
+
             self.loadSheet(self.workbook[name])
 
     #Загрузить лист Excel
@@ -272,6 +296,7 @@ class Main(QWidget):
     
     # Сохранить текущую клетку
     def cellClicked(self, row, column):
+        self.player.play()
         self.selectedRow = row
         
 
