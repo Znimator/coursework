@@ -75,23 +75,28 @@ class DataWindow(QWidget):
         super().__init__()
 
         self.setWindowTitle("Add Data")
-        self.setFixedSize(500, 500)
+        #self.setFixedSize(500, 500)
+        self.setStyleSheet("background-color: #1e1f22; color: white;")
 
         self.Layout = QVBoxLayout()
         self.setLayout(self.Layout)
 
         self.addButton = QPushButton("Добавить")
+        self.cancelButton = QPushButton("Отмена")
+        self.cancelButton.clicked.connect(self.cancel)
         self.addButton.clicked.connect(self.acceptInfo)
         self.Layout.addWidget(self.addButton)
         
         self.inputs :list[QLineEdit] = []
-        self.labels :list[QLabel] = []
+
+    def cancel(self):
+        self.close()
 
     # Добавления новой строки по записанным данным
     def acceptInfo(self):
         widget.currentWidget.insertRow(0)
 
-        for i in range(len(self.labels)):
+        for i in range(len(self.inputs)):
             print(0, i)
             item = TableWidgetItem(str(self.inputs[i].text()))
 
@@ -110,13 +115,11 @@ class DataWindow(QWidget):
             labels.append(str(c+1) if label is None else label.text())
         
         for l in range(len(labels)):
-            label = QLabel(labels[l])
             lineEdit = QLineEdit()
-            self.Layout.addWidget(label)
+            lineEdit.setPlaceholderText(labels[l])
             self.Layout.addWidget(lineEdit)
 
             self.inputs.append(lineEdit)
-            self.labels.append(label)
 
         self.Layout.addWidget(self.addButton)
 
