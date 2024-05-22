@@ -22,6 +22,7 @@ class Window(QMainWindow):
         self.menu = QMenu("Файл")
         action1 = self.menu.addAction("Сохранить")
         action1.triggered.connect(self.export)
+        self.setStyleSheet("background-color: #1e1f22; color: white;")
 
         self.menu_bar.addMenu(self.menu)
 
@@ -135,8 +136,8 @@ class Main(QWidget):
         self.setWindowTitle("Load Excel data to QTableWidget")
         self.setBaseSize(700, 700)
         
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        self.main_layout = QVBoxLayout()
+        self.setLayout(self.main_layout)
         
         self.addData = QPushButton("Добавить Информацию")
         self.add_row = QPushButton("Добавить линию")
@@ -156,34 +157,28 @@ class Main(QWidget):
         self.search = QLineEdit()
         self.search.textChanged.connect(self.findName)
 
-        self.list = QListWidget()
-        self.list.setMaximumSize(500, 100)
-        self.list.itemClicked.connect(self.listClick)
-
         #Добавление виджетов pyqt6 в макет/каркас
-        layout.addWidget(self.filter_list)
-        layout.addWidget(self.search)
-        layout.addWidget(self.addData)
-        layout.addWidget(self.remove_row)
-        
-        layout.addWidget(self.list)
-        layout.setAlignment(self.list, Qt.AlignmentFlag.AlignCenter)
+        self.main_layout.addWidget(self.filter_list)
+        self.main_layout.addWidget(self.search)
+        self.main_layout.addWidget(self.addData)
+        self.main_layout.addWidget(self.remove_row)
 
         
         path = "./data.xlsx"
         self.workbook = openpyxl.load_workbook(path)
         self.temp_sheets = {}
 
+        self.buttons :dict[str, QPushButton] = {}
+
         # Предзагрузка листов
         for name in self.workbook.sheetnames:
             tableWidget = QTableWidget()
 
             tableWidget.cellClicked.connect(self.cellClicked)
-
             self.temp_sheets[self.workbook[name]] = tableWidget
             tableWidget.hide()
 
-            layout.addWidget(tableWidget)
+            self.main_layout.addWidget(tableWidget)
 
         self.currentWidget :QTableWidget = self.temp_sheets[next(iter(self.temp_sheets))]
 
@@ -215,7 +210,11 @@ class Main(QWidget):
                             pass
 
     #Переключение между листами Excel при помощи QListWidget
-    def listClick(self, item :QListWidgetItem):
+    def listClick(self):
+        sender = self.sender()
+        print(sender)
+        item = sender
+
         for sheet, widget in self.temp_sheets.items():
             widget.hide()
 
@@ -238,7 +237,10 @@ class Main(QWidget):
     def load_data(self):
 
         for name in self.workbook.sheetnames:
-            self.list.addItem(name)
+            self.buttons[name] = QPushButton(name)
+            self.buttons[name].clicked.connect(self.listClick)
+            self.main_layout.addWidget(self.buttons[name])
+
             self.loadSheet(self.workbook[name])
 
     #Загрузить лист Excel
