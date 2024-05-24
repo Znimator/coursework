@@ -129,6 +129,8 @@ class DataWindow(QWidget):
 
         for i in reversed(range(self.Layout.count())): 
             self.Layout.itemAt(i).widget().setParent(None)
+            
+        self.inputs :list[QLineEdit] = []
 
         event.accept()
 
