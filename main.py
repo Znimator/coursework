@@ -129,7 +129,7 @@ class DataWindow(QWidget):
 
         for i in reversed(range(self.Layout.count())): 
             self.Layout.itemAt(i).widget().setParent(None)
-            
+
         self.inputs :list[QLineEdit] = []
 
         event.accept()
@@ -162,9 +162,13 @@ class Main(QWidget):
         self.search = QLineEdit()
         self.search.textChanged.connect(self.findName)
 
+        self.sepparator = QLabel("--------------------------")
+        self.sepparator2 = QLabel("--------------------------")
+
         #Добавление виджетов pyqt6 в макет/каркас
         self.main_layout.addWidget(self.filter_list)
         self.main_layout.addWidget(self.search)
+        self.main_layout.addWidget(self.sepparator, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.addData)
         self.main_layout.addWidget(self.remove_row)
 
@@ -186,6 +190,8 @@ class Main(QWidget):
             self.main_layout.addWidget(tableWidget)
 
         self.currentWidget :QTableWidget = self.temp_sheets[next(iter(self.temp_sheets))]
+
+        self.main_layout.addWidget(self.sepparator2, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.load_data()
 
