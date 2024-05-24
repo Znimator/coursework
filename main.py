@@ -68,6 +68,41 @@ class Window(QMainWindow):
                         
         wb.save(filename)
 
+class AcceptWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Подтверждение")
+        self.setFixedSize(300, 100)
+
+        self.label = QLabel("Вы точно хотите добавить?")
+        self.yes_button = QPushButton("Да")
+        self.no_button = QPushButton("Нет")
+
+        self._layout = QVBoxLayout()
+        self.setLayout(self._layout)
+
+        self._layout.addWidget(self.label)
+        self._layout.addWidget(self.yes_button)
+        self._layout.addWidget(self.no_button)
+
+        self.yes_button.clicked.connect(self.accept)
+        self.no_button.clicked.connect(self.decline)
+
+    def accept(self):
+        widget.currentWidget.insertRow(0)
+
+        for i in range(len(widget.DataWindow.labels)):
+            print(0, i)
+            item = TableWidgetItem(str(widget.DataWindow.inputs[i].text()))
+
+            widget.currentWidget.setItem(0 , i, item)
+
+        widget.DataWindow.close()
+        self.close()
+    
+    def decline(self):
+        self.close()
+
 # Окно для добавления новой даты
 class DataWindow(QWidget):
     def __init__(self):
@@ -79,6 +114,8 @@ class DataWindow(QWidget):
         self.Layout = QVBoxLayout()
         self.setLayout(self.Layout)
 
+        self.acceptWindow = AcceptWindow()
+
         self.addButton = QPushButton("Добавить")
         self.addButton.clicked.connect(self.acceptInfo)
         self.Layout.addWidget(self.addButton)
@@ -88,13 +125,8 @@ class DataWindow(QWidget):
 
     # Добавления новой строки по записанным данным
     def acceptInfo(self):
-        widget.currentWidget.insertRow(0)
 
-        for i in range(len(self.labels)):
-            print(0, i)
-            item = TableWidgetItem(str(self.inputs[i].text()))
-
-            widget.currentWidget.setItem(0 , i, item)
+        self.acceptWindow.show()
 
     #Загрузка полей для заполнений
     def load(self):
