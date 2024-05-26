@@ -95,6 +95,7 @@ class DataWindow(QWidget):
 
     # Добавления новой строки по записанным данным
     def acceptInfo(self):
+        widget.player.play()
         widget.currentWidget.insertRow(0)
 
         for i in range(len(self.inputs)):
@@ -208,6 +209,7 @@ class Main(QWidget):
 
     #Запуск окна с добавлением инфы
     def show_data_window(self):
+        self.player.play()
         self.DataWindow.show()
         self.DataWindow.load()
 
