@@ -174,7 +174,7 @@ class Main(QWidget):
         self.add_row = QPushButton("Добавить линию")
         self.remove_row = QPushButton("Удалить линию")
     
-        self.filter_list = QComboBox();
+        self.filter_list = QComboBox()
 
         self.DataWindow = DataWindow()
 
