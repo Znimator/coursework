@@ -1,5 +1,6 @@
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
+from PyQt6.QtMultimedia import *
 import openpyxl
 import sys
 import time
@@ -22,7 +23,7 @@ class Window(QMainWindow):
         self.menu = QMenu("Файл")
         action1 = self.menu.addAction("Сохранить")
         action1.triggered.connect(self.export)
-        self.setStyleSheet("background-color: #1e1f22; color: white;")
+        self.setStyleSheet("background-color: #ADADAD; color: black;")
 
         self.menu_bar.addMenu(self.menu)
 
@@ -76,7 +77,7 @@ class DataWindow(QWidget):
 
         self.setWindowTitle("Add Data")
         #self.setFixedSize(500, 500)
-        self.setStyleSheet("background-color: #1e1f22; color: white;")
+        self.setStyleSheet("background-color: #ADADAD; color: black;")
 
         self.Layout = QVBoxLayout()
         self.setLayout(self.Layout)
@@ -148,7 +149,21 @@ class Main(QWidget):
         self.add_row = QPushButton("Добавить линию")
         self.remove_row = QPushButton("Удалить линию")
     
-        self.filter_list = QComboBox();
+        self.music = QSoundEffect()
+        self.music.setSource(QUrl.fromLocalFile("./music.wav"))
+        self.music.setLoopCount(10)
+        self.music.setVolume(0.25)
+        self.music.play()
+
+        self.player = QSoundEffect()
+        self.player.setSource(QUrl.fromLocalFile("./click.wav"))
+        self.player.setVolume(0.75)
+
+        self.filter_list = QComboBox()
+        self.filter_list.setPlaceholderText("Фильтры")
+        self.sheet_list = QComboBox()
+        self.sheet_list.setPlaceholderText("Листы")
+        self.sheet_list.currentTextChanged.connect(self.listChange)
 
         self.DataWindow = DataWindow()
 
@@ -164,6 +179,7 @@ class Main(QWidget):
 
         #Добавление виджетов pyqt6 в макет/каркас
         self.main_layout.addWidget(self.filter_list)
+        self.main_layout.addWidget(self.sheet_list)
         self.main_layout.addWidget(self.search)
         self.main_layout.addWidget(self.addData)
         self.main_layout.addWidget(self.remove_row)
@@ -181,6 +197,7 @@ class Main(QWidget):
 
             tableWidget.cellClicked.connect(self.cellClicked)
             self.temp_sheets[self.workbook[name]] = tableWidget
+            self.sheet_list.addItem(name)
             tableWidget.hide()
 
             self.main_layout.addWidget(tableWidget)
@@ -215,16 +232,14 @@ class Main(QWidget):
                             pass
 
     #Переключение между листами Excel при помощи QListWidget
-    def listClick(self):
-        sender = self.sender()
-        print(sender)
-        item = sender
+    def listChange(self, item):
+        self.player.play()
 
         for sheet, widget in self.temp_sheets.items():
             widget.hide()
 
-        self.temp_sheets[self.workbook[item.text()]].show()
-        self.currentWidget = self.temp_sheets[self.workbook[item.text()]]
+        self.temp_sheets[self.workbook[item]].show()
+        self.currentWidget = self.temp_sheets[self.workbook[item]]
 
         labels = []
 
@@ -242,10 +257,6 @@ class Main(QWidget):
     def load_data(self):
 
         for name in self.workbook.sheetnames:
-            self.buttons[name] = QPushButton(name)
-            self.buttons[name].clicked.connect(self.listClick)
-            self.main_layout.addWidget(self.buttons[name])
-
             self.loadSheet(self.workbook[name])
 
     #Загрузить лист Excel
@@ -279,12 +290,14 @@ class Main(QWidget):
 
     #Удалить линию
     def deleteRow(self, *args):
-        print(self.selectedRow)
+        self.player.play()
+
         self.currentWidget.removeRow(self.selectedRow)
-        print(*args)
+        
     
     # Сохранить текущую клетку
     def cellClicked(self, row, column):
+        self.player.play()
         self.selectedRow = row
         
 
