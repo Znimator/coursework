@@ -22,7 +22,7 @@ class Window(QMainWindow):
         self.menu = QMenu("Файл")
         action1 = self.menu.addAction("Сохранить")
         action1.triggered.connect(self.export)
-        self.setStyleSheet("background-color: #1e1f22; color: white;")
+        self.setStyleSheet("background-color: #424242; color: white;")
 
         self.menu_bar.addMenu(self.menu)
 
@@ -76,7 +76,7 @@ class DataWindow(QWidget):
 
         self.setWindowTitle("Add Data")
         #self.setFixedSize(500, 500)
-        self.setStyleSheet("background-color: #1e1f22; color: white;")
+        self.setStyleSheet("background-color: #424242; color: white;")
 
         self.Layout = QVBoxLayout()
         self.setLayout(self.Layout)
@@ -144,31 +144,26 @@ class Main(QWidget):
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
         
-        self.addData = QPushButton("Добавить Информацию")
-        self.add_row = QPushButton("Добавить линию")
+        self.addData = QPushButton("Добавить")
         self.remove_row = QPushButton("Удалить линию")
     
-        self.filter_list = QComboBox();
+        self.filter_list = QComboBox()
 
         self.DataWindow = DataWindow()
 
         self.addData.clicked.connect(self.show_data_window)
 
-        self.add_row.clicked.connect(self.addRow)
         self.remove_row.clicked.connect(self.deleteRow)
 
         self.selectedRow = 0
 
         self.search = QLineEdit()
+        self.search.setPlaceholderText("Поиск по Фильтру")
         self.search.textChanged.connect(self.findName)
-
-        self.sepparator = QLabel("--------------------------")
-        self.sepparator2 = QLabel("--------------------------")
 
         #Добавление виджетов pyqt6 в макет/каркас
         self.main_layout.addWidget(self.filter_list)
         self.main_layout.addWidget(self.search)
-        self.main_layout.addWidget(self.sepparator, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.addData)
         self.main_layout.addWidget(self.remove_row)
 
@@ -182,18 +177,33 @@ class Main(QWidget):
         # Предзагрузка листов
         for name in self.workbook.sheetnames:
             tableWidget = QTableWidget()
+            label = QLabel(name)
 
             tableWidget.cellClicked.connect(self.cellClicked)
             self.temp_sheets[self.workbook[name]] = tableWidget
-            tableWidget.hide()
 
+            self.main_layout.addWidget(label)
             self.main_layout.addWidget(tableWidget)
 
         self.currentWidget :QTableWidget = self.temp_sheets[next(iter(self.temp_sheets))]
 
-        self.main_layout.addWidget(self.sepparator2, alignment=Qt.AlignmentFlag.AlignCenter)
-
         self.load_data()
+
+        filter_labels = []
+        print(self.temp_sheets)
+        for sheetNum in range(len(self.temp_sheets)):
+            sheet = self.temp_sheets[self.workbook.worksheets[sheetNum]]
+            print(sheet)
+            print(sheet.columnCount())
+            for c in range(sheet.columnCount()):
+                label = sheet.horizontalHeaderItem(c)
+                toAppend = str(c+1) if label is None else label.text()
+                filter_labels.append(toAppend)
+
+        print(filter_labels)
+
+        for i in filter_labels:
+            self.filter_list.addItem(i) 
 
     #Запуск окна с добавлением инфы
     def show_data_window(self):
@@ -206,19 +216,22 @@ class Main(QWidget):
         found = False
 
         #Поиск по заданной строке
-        for row in range(self.currentWidget.rowCount()):
-            for column in range(self.currentWidget.columnCount()):
-                header = self.currentWidget.horizontalHeaderItem(column)
-                if header != None:
-                    if header.text() == self.filter_list.currentText(): 
-                        item = self.currentWidget.item(row, column)
-                        try:
-                            found = name in item.text().lower()
-                            self.currentWidget.setRowHidden(row, not found)
-                            if found:
-                                break
-                        except AttributeError:
-                            pass
+        for sheetNum in range(len(self.temp_sheets)):
+            sheet = self.temp_sheets[self.workbook.worksheets[sheetNum]]
+
+            for row in range(sheet.rowCount()):
+                for column in range(sheet.columnCount()):
+                    header = sheet.horizontalHeaderItem(column)
+                    if header != None:
+                        if header.text() == self.filter_list.currentText(): 
+                            item = sheet.item(row, column)
+                            try:
+                                found = name in item.text().lower()
+                                sheet.setRowHidden(row, not found)
+                                if found:
+                                    break
+                            except AttributeError:
+                                pass
 
     #Переключение между листами Excel при помощи QListWidget
     def listClick(self):
@@ -248,10 +261,6 @@ class Main(QWidget):
     def load_data(self):
 
         for name in self.workbook.sheetnames:
-            self.buttons[name] = QPushButton(name)
-            self.buttons[name].clicked.connect(self.listClick)
-            self.main_layout.addWidget(self.buttons[name])
-
             self.loadSheet(self.workbook[name])
 
     #Загрузить лист Excel
@@ -291,7 +300,11 @@ class Main(QWidget):
     
     # Сохранить текущую клетку
     def cellClicked(self, row, column):
+        print(self.sender())
+        
         self.selectedRow = row
+
+        self.currentWidget = self.sender()
         
 
 #Запуск кода
