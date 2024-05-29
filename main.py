@@ -68,6 +68,33 @@ class Window(QMainWindow):
                         
         wb.save(filename)
 
+class AcceptRemoveLineWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Подтверждение")
+        self.setFixedSize(300, 100)
+
+        self.label = QLabel("Вы точно хотите удалить?")
+        self.yes_button = QPushButton("Да")
+        self.no_button = QPushButton("Нет")
+
+        self._layout = QVBoxLayout()
+        self.setLayout(self._layout)
+
+        self._layout.addWidget(self.label)
+        self._layout.addWidget(self.yes_button)
+        self._layout.addWidget(self.no_button)
+
+        self.yes_button.clicked.connect(self.accept)
+        self.no_button.clicked.connect(self.decline)
+
+    def accept(self):
+        widget.currentWidget.removeRow(widget.selectedRow)
+        self.close()
+    
+    def decline(self):
+        self.close()
+
 class AcceptWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -177,6 +204,7 @@ class Main(QWidget):
         self.filter_list = QComboBox()
 
         self.DataWindow = DataWindow()
+        self.acceptRemoveWindow = AcceptRemoveLineWindow()
 
         self.addData.clicked.connect(self.show_data_window)
 
@@ -188,19 +216,16 @@ class Main(QWidget):
         self.search = QLineEdit()
         self.search.textChanged.connect(self.findName)
 
-        self.list = QListWidget()
-        self.list.setMaximumSize(500, 100)
-        self.list.itemClicked.connect(self.listClick)
+        self.sheet_list = QComboBox()
+        self.sheet_list.setPlaceholderText("Листы")
+        self.sheet_list.currentTextChanged.connect(self.listChange)
 
         #Добавление виджетов pyqt6 в макет/каркас
+        layout.addWidget(self.sheet_list)
         layout.addWidget(self.filter_list)
         layout.addWidget(self.search)
         layout.addWidget(self.addData)
         layout.addWidget(self.remove_row)
-        
-        layout.addWidget(self.list)
-        layout.setAlignment(self.list, Qt.AlignmentFlag.AlignCenter)
-
         
         path = "./data.xlsx"
         self.workbook = openpyxl.load_workbook(path)
@@ -213,6 +238,7 @@ class Main(QWidget):
             tableWidget.cellClicked.connect(self.cellClicked)
 
             self.temp_sheets[self.workbook[name]] = tableWidget
+            self.sheet_list.addItem(name)
             tableWidget.hide()
 
             layout.addWidget(tableWidget)
@@ -247,12 +273,13 @@ class Main(QWidget):
                             pass
 
     #Переключение между листами Excel при помощи QListWidget
-    def listClick(self, item :QListWidgetItem):
+    def listChange(self, item):
+
         for sheet, widget in self.temp_sheets.items():
             widget.hide()
 
-        self.temp_sheets[self.workbook[item.text()]].show()
-        self.currentWidget = self.temp_sheets[self.workbook[item.text()]]
+        self.temp_sheets[self.workbook[item]].show()
+        self.currentWidget = self.temp_sheets[self.workbook[item]]
 
         labels = []
 
@@ -270,7 +297,6 @@ class Main(QWidget):
     def load_data(self):
 
         for name in self.workbook.sheetnames:
-            self.list.addItem(name)
             self.loadSheet(self.workbook[name])
 
     #Загрузить лист Excel
@@ -304,8 +330,8 @@ class Main(QWidget):
 
     #Удалить линию
     def deleteRow(self, *args):
-        print(self.selectedRow)
-        self.currentWidget.removeRow(self.selectedRow)
+        
+        self.acceptRemoveWindow.show()
         print(*args)
     
     # Сохранить текущую клетку
