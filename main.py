@@ -12,6 +12,22 @@ class TableWidgetItem(QTableWidgetItem):
         except ValueError:
             return super().__lt__(other)
 
+class InfoWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.TextLabel = QLabel()
+        self._layount = QVBoxLayout()
+
+        self._layount.addWidget(self.TextLabel)
+
+        self.setLayout(self._layount)
+
+    def ShowText(self, text):
+        self.show()
+        self.TextLabel.setText(text)
+
+
 # Основное окно приложения
 class Window(QMainWindow):
     def __init__(self):
@@ -19,19 +35,75 @@ class Window(QMainWindow):
 
         self.menu_bar = QMenuBar()
 
+        self.InfoWindow = InfoWindow()
+
         self.menu = QMenu("Файл")
+        self.info = QMenu("Инфо")
         action1 = self.menu.addAction("Сохранить")
+        action2 = self.menu.addAction("Сохранить лист")
+
+        author = self.info.addAction("Об Авторе")
+        programm = self.info.addAction("Об программе")
+
         action1.triggered.connect(self.export)
+        action2.triggered.connect(self.exportSheet)
+        author.triggered.connect(self.authorInfo)
+        programm.triggered.connect(self.programmInfo)
 
         self.menu_bar.addMenu(self.menu)
+        self.menu_bar.addMenu(self.info)
 
         self.setMenuBar(self.menu_bar)
 
+    def authorInfo(self):
+        self.InfoWindow.ShowText("ТЕКСТ ОБ АВТОРЕ")
+
+    def programmInfo(self):
+        self.InfoWindow.ShowText("ТЕКСТ ОБ ПРОГРАММЕ")
+
     def closeEvent(self, event):
-        print("closing")
         widget.DataWindow.close()
 
         event.accept()
+
+    def exportSheet(self):
+        filename, filter = QFileDialog.getSaveFileName(self, 'Save file', '','Excel files (*.xlsx)')
+        wb = openpyxl.Workbook()
+
+        temp = wb["Sheet"]
+        wb.remove(temp)
+
+        print(filename)
+
+        centralWidget = self.centralWidget()
+
+        table_widget = widget.currentWidget
+        workingSheet = wb.create_sheet("Export")
+
+        labels = []
+        for c in range(table_widget.columnCount()):
+            it = table_widget.horizontalHeaderItem(c)
+            labels.append(str(c+1) if it is None else it.text())
+        print(labels)
+
+        for i in range(len(labels)):
+            value = labels[i]
+            workingSheet.cell(1, i + 1, value)
+
+        if filename:
+            for column in range(table_widget.columnCount()):
+                k = 1
+                for row in range(table_widget.rowCount()):
+                    print(row, table_widget.isRowHidden(row))
+                    if table_widget.isRowHidden(row) == False:
+                        try:
+                            text = str(table_widget.item(row, column).text())
+                            k += 1
+                            workingSheet.cell(k, column + 1, text)
+                        except AttributeError:
+                            pass
+                        
+        wb.save(filename)
 
     def export(self):
         filename, filter = QFileDialog.getSaveFileName(self, 'Save file', '','Excel files (*.xlsx)')
