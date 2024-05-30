@@ -22,7 +22,8 @@ class Window(QMainWindow):
         self.menu = QMenu("Файл")
         action1 = self.menu.addAction("Сохранить")
         action1.triggered.connect(self.export)
-        self.setStyleSheet("background-color: #424242; color: white;")
+        self.setStyleSheet("background-color: #424242; color: black;")
+        
 
         self.menu_bar.addMenu(self.menu)
 
@@ -146,6 +147,8 @@ class Main(QWidget):
         
         self.addData = QPushButton("Добавить")
         self.remove_row = QPushButton("Удалить линию")
+
+        self.mainLabel = QLabel("МАСТЕР, ВЛАДЫКА")
     
         self.filter_list = QComboBox()
 
@@ -162,6 +165,7 @@ class Main(QWidget):
         self.search.textChanged.connect(self.findName)
 
         #Добавление виджетов pyqt6 в макет/каркас
+        self.main_layout.addWidget(self.mainLabel, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.filter_list)
         self.main_layout.addWidget(self.search)
         self.main_layout.addWidget(self.addData)
@@ -174,15 +178,24 @@ class Main(QWidget):
 
         self.buttons :dict[str, QPushButton] = {}
 
+        self.expandButtons = []
+
         # Предзагрузка листов
         for name in self.workbook.sheetnames:
             tableWidget = QTableWidget()
             label = QLabel(name)
+            expand = QPushButton("Развернуть")
+            expand.linked = tableWidget
+            expand.linkedLabel = label
+
+            expand.clicked.connect(self.expandTalbe)
+            self.expandButtons.append(expand)
 
             tableWidget.cellClicked.connect(self.cellClicked)
             self.temp_sheets[self.workbook[name]] = tableWidget
 
             self.main_layout.addWidget(label)
+            self.main_layout.addWidget(expand)
             self.main_layout.addWidget(tableWidget)
 
         self.currentWidget :QTableWidget = self.temp_sheets[next(iter(self.temp_sheets))]
@@ -203,7 +216,24 @@ class Main(QWidget):
         print(filter_labels)
 
         for i in filter_labels:
-            self.filter_list.addItem(i) 
+            self.filter_list.addItem(i)  
+
+    def expandTalbe(self):
+        sender = self.sender()
+        print(sender.linked)
+        if sender.text() == "Развернуть":
+            sender.setText("Свернуть")
+            for button in self.expandButtons:
+                if button != sender:
+                    button.hide()
+                    button.linked.hide()
+                    button.linkedLabel.hide()
+        else:
+            for button in self.expandButtons:
+                button.setText("Развернуть")
+                button.show()
+                button.linked.show()
+                button.linkedLabel.show()
 
     #Запуск окна с добавлением инфы
     def show_data_window(self):
