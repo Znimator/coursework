@@ -1,8 +1,8 @@
-from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 import openpyxl
 import sys
-import time
+
+
 
 # Изменение метода __lt__ чтобы можно было производить поиск текстом
 class TableWidgetItem(QTableWidgetItem):
@@ -12,17 +12,18 @@ class TableWidgetItem(QTableWidgetItem):
         except ValueError:
             return super().__lt__(other)
 
+
 # Основное окно приложения
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.menu_bar = QMenuBar()
-
+        self.setMinimumSize(500, 500)
         self.menu = QMenu("Файл")
         action1 = self.menu.addAction("Сохранить")
         action1.triggered.connect(self.export)
-        self.setStyleSheet("background-color: #1e1f22; color: white;")
+        self.setStyleSheet("background-color: #FFFFFF; color: black;")
 
         self.menu_bar.addMenu(self.menu)
 
@@ -35,7 +36,7 @@ class Window(QMainWindow):
         event.accept()
 
     def export(self):
-        filename, filter = QFileDialog.getSaveFileName(self, 'Save file', '','Excel files (*.xlsx)')
+        filename, filter = QFileDialog.getSaveFileName(self, 'Save file', '', 'Excel files (*.xlsx)')
         wb = openpyxl.Workbook()
 
         temp = wb["Sheet"]
@@ -51,7 +52,7 @@ class Window(QMainWindow):
             labels = []
             for c in range(table_widget.columnCount()):
                 it = table_widget.horizontalHeaderItem(c)
-                labels.append(str(c+1) if it is None else it.text())
+                labels.append(str(c + 1) if it is None else it.text())
             print(labels)
 
             for i in range(len(labels)):
@@ -66,17 +67,16 @@ class Window(QMainWindow):
                             workingSheet.cell(row + 2, column + 1, text)
                         except AttributeError:
                             pass
-                        
+
         wb.save(filename)
 
 # Окно для добавления новой даты
-class DataWindow(QWidget):
+class DataWindow(QWidget):#стили текста,заголовок,фон,кнопки
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Add Data")
-        #self.setFixedSize(500, 500)
-        self.setStyleSheet("background-color: #1e1f22; color: white;")
+        self.setStyleSheet("background-color: #FFFFFF; color: black;")
 
         self.Layout = QVBoxLayout()
         self.setLayout(self.Layout)
@@ -86,24 +86,24 @@ class DataWindow(QWidget):
         self.cancelButton.clicked.connect(self.cancel)
         self.addButton.clicked.connect(self.acceptInfo)
         self.Layout.addWidget(self.addButton)
-        
-        self.inputs :list[QLineEdit] = []
 
-    def cancel(self):
+        self.inputs: list[QLineEdit] = []
+
+    def cancel(self):#закрытие окна
         self.close()
 
     # Добавления новой строки по записанным данным
-    def acceptInfo(self):
+    def acceptInfo(self):#вставка новой строки к таблицу
         widget.currentWidget.insertRow(0)
 
         for i in range(len(self.inputs)):
             print(0, i)
             item = TableWidgetItem(str(self.inputs[i].text()))
 
-            widget.currentWidget.setItem(0 , i, item)
+            widget.currentWidget.setItem(0, i, item)
 
-    #Загрузка полей для заполнений
-    def load(self):
+    # Загрузка полей для заполнений
+    def load(self):#загрузка полей
         print("loading stuff")
 
         self.Layout.removeWidget(self.addButton)
@@ -112,8 +112,8 @@ class DataWindow(QWidget):
 
         for c in range(widget.currentWidget.columnCount()):
             label = widget.currentWidget.horizontalHeaderItem(c)
-            labels.append(str(c+1) if label is None else label.text())
-        
+            labels.append(str(c + 1) if label is None else label.text())
+
         for l in range(len(labels)):
             lineEdit = QLineEdit()
             lineEdit.setPlaceholderText(labels[l])
@@ -124,15 +124,16 @@ class DataWindow(QWidget):
         self.Layout.addWidget(self.addButton)
 
     # Действия при закрытии окна
-    def closeEvent(self, event):
+    def closeEvent(self, event):#очистка
         print("clearing stuff")
 
-        for i in reversed(range(self.Layout.count())): 
+        for i in reversed(range(self.Layout.count())):
             self.Layout.itemAt(i).widget().setParent(None)
-            
-        self.inputs :list[QLineEdit] = []
+
+        self.inputs: list[QLineEdit] = []
 
         event.accept()
+
 
 # Главное окно где создаются списки и редактируется дата
 class Main(QWidget):
@@ -140,14 +141,14 @@ class Main(QWidget):
         super(Main, self).__init__()
         self.setWindowTitle("Load Excel data to QTableWidget")
         self.setBaseSize(700, 700)
-        
+
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
-        
+
         self.addData = QPushButton("Добавить Информацию")
         self.add_row = QPushButton("Добавить линию")
         self.remove_row = QPushButton("Удалить линию")
-    
+
         self.filter_list = QComboBox();
 
         self.DataWindow = DataWindow()
@@ -162,18 +163,17 @@ class Main(QWidget):
         self.search = QLineEdit()
         self.search.textChanged.connect(self.findName)
 
-        #Добавление виджетов pyqt6 в макет/каркас
+        # Добавление виджетов pyqt6 в макет/каркас
         self.main_layout.addWidget(self.filter_list)
         self.main_layout.addWidget(self.search)
         self.main_layout.addWidget(self.addData)
         self.main_layout.addWidget(self.remove_row)
 
-        
-        path = "./data.xlsx"
+        path = "./tabl.xlsx"
         self.workbook = openpyxl.load_workbook(path)
         self.temp_sheets = {}
 
-        self.buttons :dict[str, QPushButton] = {}
+        self.buttons: dict[str, QPushButton] = {}
 
         # Предзагрузка листов
         for name in self.workbook.sheetnames:
@@ -185,26 +185,26 @@ class Main(QWidget):
 
             self.main_layout.addWidget(tableWidget)
 
-        self.currentWidget :QTableWidget = self.temp_sheets[next(iter(self.temp_sheets))]
+        self.currentWidget: QTableWidget = self.temp_sheets[next(iter(self.temp_sheets))]
 
         self.load_data()
 
-    #Запуск окна с добавлением инфы
+    # Запуск окна с добавлением инфы
     def show_data_window(self):
         self.DataWindow.show()
         self.DataWindow.load()
 
-    #Сортировка
+    # Сортировка
     def findName(self):
         name = self.search.text().lower()
         found = False
 
-        #Поиск по заданной строке
+        # Поиск по заданной строке
         for row in range(self.currentWidget.rowCount()):
             for column in range(self.currentWidget.columnCount()):
                 header = self.currentWidget.horizontalHeaderItem(column)
                 if header != None:
-                    if header.text() == self.filter_list.currentText(): 
+                    if header.text() == self.filter_list.currentText():
                         item = self.currentWidget.item(row, column)
                         try:
                             found = name in item.text().lower()
@@ -214,7 +214,7 @@ class Main(QWidget):
                         except AttributeError:
                             pass
 
-    #Переключение между листами Excel при помощи QListWidget
+    # Переключение между листами Excel при помощи QListWidget
     def listClick(self):
         sender = self.sender()
         print(sender)
@@ -230,15 +230,15 @@ class Main(QWidget):
 
         for c in range(self.currentWidget.columnCount()):
             label = self.currentWidget.horizontalHeaderItem(c)
-            labels.append(str(c+1) if label is None else label.text())
-    
-        #Загрузка фильтра при смене листа
+            labels.append(str(c + 1) if label is None else label.text())
+
+        # Загрузка фильтра при смене листа
         self.filter_list.clear()
 
         for i in labels:
             self.filter_list.addItem(i)
 
-    #Загрузка всех листов Excel при помощи .loadSheet()
+    # Загрузка всех листов Excel при помощи .loadSheet()
     def load_data(self):
 
         for name in self.workbook.sheetnames:
@@ -248,12 +248,12 @@ class Main(QWidget):
 
             self.loadSheet(self.workbook[name])
 
-    #Загрузить лист Excel
+    # Загрузить лист Excel
     def loadSheet(self, sheet):
 
-        self.temp_sheets[sheet].setRowCount(sheet.max_row)
+        self.temp_sheets[sheet].setRowCount(sheet.max_row - 1)
         self.temp_sheets[sheet].setColumnCount(sheet.max_column)
-        
+
         list_values = list(sheet.values)
         self.temp_sheets[sheet].setHorizontalHeaderLabels(list_values[0])
         self.temp_sheets[sheet].setSortingEnabled(True)
@@ -265,30 +265,30 @@ class Main(QWidget):
             col_index = 0
             for value in value_tuple:
                 item = TableWidgetItem(str(value))
-                
-                self.temp_sheets[sheet].setItem(row_index , col_index, item)
-               
+
+                self.temp_sheets[sheet].setItem(row_index, col_index, item)
+
                 col_index += 1
             row_index += 1
 
-    #Добавить линию
-    def addRow(self):
+
+    def addRow(self): # Добавить строку в таблицу
         self.currentWidget.insertRow(self.selectedRow)
 
         return self.selectedRow
 
-    #Удалить линию
-    def deleteRow(self, *args):
+
+    def deleteRow(self, *args): # Удалить линию
         print(self.selectedRow)
         self.currentWidget.removeRow(self.selectedRow)
         print(*args)
-    
+
     # Сохранить текущую клетку
     def cellClicked(self, row, column):
         self.selectedRow = row
-        
 
-#Запуск кода
+
+# Запуск кода
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Window()
@@ -297,5 +297,5 @@ if __name__ == '__main__':
     window.setCentralWidget(widget)
     widget.show()
     window.show()
-    
+
     app.exec()
