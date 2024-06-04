@@ -12,11 +12,19 @@ class TableWidgetItem(QTableWidgetItem):
         except ValueError:
             return super().__lt__(other)
 
+PROGRAM_TEXT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " \
+       "Nullam malesuada tellus in ex elementum, vitae rutrum enim vestibulum."
+
+AUTHOR_TEXT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " \
+       "Nullam malesuada tellus in ex elementum, vitae rutrum enim vestibulum."
+
 class InfoWindow(QWidget):
     def __init__(self):
         super().__init__()
 
         self.TextLabel = QLabel()
+        self.TextLabel.setWordWrap(True)
+        self.TextLabel.setMinimumSize(200, 200)
         self._layount = QVBoxLayout()
 
         self._layount.addWidget(self.TextLabel)
@@ -59,7 +67,7 @@ class Window(QMainWindow):
         self.InfoWindow.ShowText("ТЕКСТ ОБ АВТОРЕ")
 
     def programmInfo(self):
-        self.InfoWindow.ShowText("ТЕКСТ ОБ ПРОГРАММЕ")
+        self.InfoWindow.ShowText(PROGRAM_TEXT)
 
     def closeEvent(self, event):
         widget.DataWindow.close()
