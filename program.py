@@ -58,6 +58,8 @@ class AddClientWindow(QWidget):
             value = self.inputs[i].text()
 
             sheet.cell(len(rows) + 1, i+1, value)
+        
+        self.close()
     
     #Загрузка полей для заполнений
     def load(self):
@@ -110,11 +112,15 @@ def authorInfo():
 
 def export():
     filename, filter = QFileDialog.getSaveFileName(window, 'Save file', '','Excel files (*.xlsx)')
+    print(filename)
+    if filename == "":
+        return
     
     workbook.save(filename)
 
 def loadSheet(index):
     tableWidget.reset()
+    filter_list.clear()
 
     sheet = sheets[index]
     global currentSheetName
@@ -209,6 +215,8 @@ tableWidget :QTableWidget = form.tableWidget
 
 filter_list :QComboBox = form.comboBox_2
 
+loadSheet(0)
+
 search :QLineEdit = form.lineEdit
 
 comboBox :QComboBox = form.comboBox
@@ -220,8 +228,8 @@ comboBox.currentIndexChanged.connect(loadSheet)
 
 form.lineEdit.textChanged.connect(findName)
 
-form.action_3.triggered.connect(export)
-form.action.triggered.connect(authorInfo)
+form.action_3.triggered.connect(authorInfo)
+form.action.triggered.connect(export)
 form.action_2.triggered.connect(programInfo)
 
 form.pushButton.clicked.connect(addClient)
