@@ -64,7 +64,7 @@ class Window(QMainWindow):
         self.setMenuBar(self.menu_bar)
 
     def authorInfo(self):
-        self.InfoWindow.ShowText("ТЕКСТ ОБ АВТОРЕ")
+        self.InfoWindow.ShowText(AUTHOR_TEXT)
 
     def programmInfo(self):
         self.InfoWindow.ShowText(PROGRAM_TEXT)
